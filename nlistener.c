@@ -1,7 +1,7 @@
 #include "nlistener.h"
+#include "gio/gio.h"
 #include "glib.h"
 #include "nobject.h"
-#include <time.h>
 
 struct _NListener
 {
@@ -70,107 +70,103 @@ n_listener_set_callback (
     return 0;
 }
 
-typedef enum
-{
-    N_SIGNAL_RETURN_STRING = 1,
-    N_SIGNAL_RETURN_STRING_ARRAY,
-    N_SIGNAL_RETURN_NOTIFICATION,
-    N_SIGNAL_RETURN_ANY
-} N_LISTENER_SIGNAL_RETURN_TYPE;
-
-static gint
-n_listener_find_signal_return_type (GVariant *signal_return_val)
-{
-    gchar *return_val_type = g_variant_get_type_string (signal_return_val);
-
-    if (!g_strcmp0 (return_val_type, "(s)"))
-        {
-            return N_SIGNAL_RETURN_STRING;
-        }
-    else if (!g_strcmp0 (return_val_type, "(as)"))
-        {
-            return N_SIGNAL_RETURN_STRING_ARRAY;
-        }
-    else if (!g_strcmp0 (return_val_type, "(susssasa{sv}i)"))
-        {
-            return N_SIGNAL_RETURN_NOTIFICATION;
-        }
-    else
-        {
-            return N_SIGNAL_RETURN_ANY;
-        }
-}
-
-static void
-n_listener_on_notification_received (
-    GDBusConnection *connection, const gchar *sender_name,
-    const gchar *object_path, const gchar *interface_name,
-    const gchar *signal_name, GVariant *parameters, gpointer n_listener_object
+static GDBusMessage *
+n_listener_dbus_notif_filter (
+    GDBusConnection *connection, GDBusMessage *received_message,
+    gboolean incoming, gpointer n_listener_object
 )
 {
-    // FIX: implement code to parse notifications
     NListener *self = N_LISTENER (n_listener_object);
     if (!self->callback)
         {
             g_warning (
                 "n_listener_on_notification_received: setting callback failed"
             );
-            return;
+            /*return;*/
         }
-    /* const gchar *body, *message, *summary, *appname, *category, */
-    /*     *default_action_name, *icon_path; */
-    /* gint id, progress; */
-    /* gint64 timestamp, timeout; */
-    /*(&s&s&s&s&s&s&s&ixxi)*/
-
-    /* GVariant *variant_actions = g_variant_new ("as", NULL, 0); */
-    /* GVariant *variant_hints = g_variant_new ("a{sv}", NULL, 0); */
-    gchar *return_val_type = g_strdup (g_variant_get_type_string (parameters));
-    /* switch (n_listener_find_signal_return_type (parameters)) */
-    /*     { */
-    /*     case N_SIGNAL_RETURN_STRING: */
-    /*         break; */
-    /*     case N_SIGNAL_RETURN_STRING_ARRAY: */
-    /*         break; */
-    /*     case N_SIGNAL_RETURN_NOTIFICATION: */
-    /*         break; */
-    /*     case N_SIGNAL_RETURN_ANY: */
-    /*         break; */
-    /*     } */
-
-    g_warning ("");
-    g_warning ("sender_name: %s", sender_name);
-    g_warning ("object_path: %s", object_path);
-    g_warning ("interface_name: %s", interface_name);
-    g_warning ("signal_name: %s", signal_name);
-    g_warning ("signal return type any: %s", return_val_type);
-    g_warning ("GVariant: %s", g_variant_print (parameters, TRUE));
-
-    /* NObject *n_object = n_object_new ( */
-    /*     "bmsacdixtop", body, message, summary, appname, category, */
-    /*     default_action_name, icon_path, id, timestamp, timeout, progress */
-    /* ); */
-    NObject *n_object = n_object_new ("");
-    self->callback (n_object, self->callback_args);
-    g_object_unref (n_object);
-}
-
-static gint
-n_listener_dbus_subscribe_to_notifications (NListener *self)
-{
-    self->subscription_id = g_dbus_connection_signal_subscribe (
-        self->connection, NULL, NULL, NULL, NULL, NULL,
-        G_DBUS_SIGNAL_FLAGS_NO_MATCH_RULE, n_listener_on_notification_received,
-        (gpointer)self, NULL
-    );
-
-    if (!self->subscription_id)
+    const gchar *object_path = g_dbus_message_get_path (received_message);
+    gboolean obj_path_notif
+        = !g_strcmp0 (object_path, "/org/freedesktop/Notifications");
+    GDBusMessageType received_message_type
+        = g_dbus_message_get_message_type (received_message);
+    gboolean message_method_call
+        = (received_message_type == G_DBUS_MESSAGE_TYPE_METHOD_CALL);
+    if (obj_path_notif && message_method_call)
         {
 
-            g_warning ("n_listener_dbus_subscribe_to_notifications: failed to "
-                       "subscribe");
-            return -1;
+            GVariant *received_message_body
+                = g_dbus_message_get_body (received_message);
+            gchar *received_message_body_type
+                = g_strdup (g_variant_get_type_string (received_message_body));
+            gboolean received_known_notif_type
+                = !g_strcmp0 (received_message_body_type, "(susssasa{sv}i)");
+            if (received_known_notif_type)
+                {
+                    gchar *body = NULL, *message = NULL, *summary = NULL,
+                          *appname = NULL, *category = NULL,
+                          *default_action_name = NULL, *icon_path = NULL;
+                    gint id = 0, progress = 0;
+                    gint64 timestamp = 0, timeout = 0;
+                    /* "(susssasa{sv}i)" */
+
+                    // Help taken from dunst
+                    GVariant *hints;
+                    gchar **actions;
+
+                    GVariantIter i;
+                    g_variant_iter_init (&i, received_message_body);
+
+                    g_variant_iter_next (&i, "s", appname);
+                    g_variant_iter_next (&i, "u", id);
+                    g_variant_iter_next (&i, "s", icon_path);
+                    g_variant_iter_next (&i, "s", summary);
+                    g_variant_iter_next (&i, "s", body);
+                    g_variant_iter_next (&i, "^a&s", &actions);
+                    g_variant_iter_next (&i, "@a{?*}", &hints);
+                    g_variant_iter_next (&i, "i", &timeout);
+
+                    GVariant *dict_value;
+                    if ((dict_value = g_variant_lookup_value (
+                             hints, "category", G_VARIANT_TYPE_STRING
+                         )))
+                        {
+                            category = g_variant_dup_string (dict_value, NULL);
+                            g_variant_unref (dict_value);
+                        }
+
+                    NObject *n_object = n_object_new (
+                        "bmsacdixtop", body, message, summary, appname,
+                        category, default_action_name, icon_path, id,
+                        timestamp, timeout, progress
+                    );
+                    self->callback (n_object, self->callback_args);
+                    g_object_unref (n_object);
+                }
         }
+    return received_message;
+}
+
+static GDBusMessage *
+n_listener_dbus_filter_drop_outgoing (
+    GDBusConnection *connection, GDBusMessage *message, gboolean incoming,
+    gpointer user_data
+)
+{
+    if (!incoming)
+        {
+            g_object_unref (message);
+            message = NULL;
+        }
+    return message;
+}
+
+gint
+n_listener_dbus_filter_notif (NListener *self)
+{
+    // Drop all outgoing messages, not allowed for a monitor object
+    g_dbus_connection_add_filter (
+        self->connection, n_listener_dbus_notif_filter, self, NULL
+    );
     return 0;
 }
 
@@ -178,20 +174,17 @@ static gint
 n_listener_dbus_become_monitor (NListener *self)
 {
     GError *error = NULL;
+
     GVariantBuilder *match_rule
         = g_variant_builder_new (G_VARIANT_TYPE ("as"));
     g_variant_builder_add (match_rule, "s", "type='signal'");
     g_variant_builder_add (
         match_rule, "s",
-        "type='signal',interface='org.freedesktop.Notifications',member='"
+        "type='method_call',interface='org.freedesktop.Notifications',member='"
         "Notify',path='/org/freedesktop/Notifications'"
+
     );
-    // FIX: listen to method_calls and not signal
-    /* g_variant_builder_add ( */
-    /*     match_rule, "s", */
-    /*     "type='method_call',interface='org.freedesktop.Notifications',member='Notify',path='/org/freedesktop/Notifications',eavesdrop='true'"
-     */
-    /* ); */
+
     g_dbus_connection_call_sync (
         self->connection, "org.freedesktop.DBus", "/org/freedesktop/DBus",
         "org.freedesktop.DBus.Monitoring", "BecomeMonitor",
@@ -210,6 +203,12 @@ n_listener_dbus_become_monitor (NListener *self)
             g_error_free (error);
             return -1;
         }
+
+    // Drop all outgoing messages, not allowed for a monitor object
+    g_dbus_connection_add_filter (
+        self->connection, n_listener_dbus_filter_drop_outgoing, NULL, NULL
+    );
+
     return 0;
 }
 
@@ -256,7 +255,13 @@ n_listener_start (NListener *self)
         {
             g_warning ("n_listener_start: dbus BecomeMonitor failed");
         }
-    return n_listener_dbus_subscribe_to_notifications (self);
+    if (n_listener_dbus_filter_notif (self) < 0)
+        {
+            g_warning (
+                "n_listener_start: could not add filter for notifcations"
+            );
+        }
+    return 0;
 }
 
 gint

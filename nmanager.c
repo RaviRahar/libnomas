@@ -136,22 +136,12 @@ n_manager_set_callback (
 static GList *
 n_manager_n_list_append (NManager *self, NObject *n_object)
 {
-    if (!N_IS_MANAGER (self))
-        {
-            g_warning ("n_manager_n_list_append: argument is not NManager");
-            return NULL;
-        }
-
-    if (!g_list_append (self->n_list, n_object))
-        {
-            g_warning ("n_manager_n_list_append: could not add new "
-                       "notification to n_list");
-        }
-
+    self->n_list = g_list_append (self->n_list, n_object);
     if (!self->n_list)
         {
             n_manager_set_n_list (self, self->n_list);
         }
+
     return self->n_list;
 }
 

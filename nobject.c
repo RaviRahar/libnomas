@@ -111,111 +111,111 @@ n_object_new (const gchar *format, ...)
 }
 
 const gchar *
-n_object_get_body (NObject *self)
+n_object_body (NObject *self)
 {
     if (!N_IS_OBJECT (self))
         {
-            g_warning ("n_object_get_body: arg is not NObject");
+            g_warning ("n_object_body: arg is not NObject");
             return NULL;
         }
     return self->body;
 }
 const gchar *
-n_object_get_message (NObject *self)
+n_object_message (NObject *self)
 {
     if (!N_IS_OBJECT (self))
         {
-            g_warning ("n_object_get_message: arg is not NObject");
+            g_warning ("n_object_message: arg is not NObject");
             return NULL;
         }
     return self->message;
 }
 const gchar *
-n_object_get_summary (NObject *self)
+n_object_summary (NObject *self)
 {
     if (!N_IS_OBJECT (self))
         {
-            g_warning ("n_object_get_summary: arg is not NObject");
+            g_warning ("n_object_summary: arg is not NObject");
             return NULL;
         }
     return self->summary;
 }
 const gchar *
-n_object_get_appname (NObject *self)
+n_object_appname (NObject *self)
 {
     if (!N_IS_OBJECT (self))
         {
-            g_warning ("n_object_get_appname: arg is not NObject");
+            g_warning ("n_object_appname: arg is not NObject");
             return NULL;
         }
     return self->appname;
 }
 const gchar *
-n_object_get_category (NObject *self)
+n_object_category (NObject *self)
 {
     if (!N_IS_OBJECT (self))
         {
-            g_warning ("n_object_get_category: arg is not NObject");
+            g_warning ("n_object_category: arg is not NObject");
             return NULL;
         }
     return self->category;
 }
 const gchar *
-n_object_get_default_action_name (NObject *self)
+n_object_default_action_name (NObject *self)
 {
     if (!N_IS_OBJECT (self))
         {
-            g_warning ("n_object_get_default_action_name: arg is not NObject");
+            g_warning ("n_object_default_action_name: arg is not NObject");
             return NULL;
         }
     return self->default_action_name;
 }
 const gchar *
-n_object_get_icon_path (NObject *self)
+n_object_icon_path (NObject *self)
 {
     if (!N_IS_OBJECT (self))
         {
-            g_warning ("n_object_get_icon_path: arg is not NObject");
+            g_warning ("n_object_icon_path: arg is not NObject");
             return NULL;
         }
     return self->icon_path;
 }
 gint
-n_object_get_id (NObject *self)
+n_object_id (NObject *self)
 {
     if (!N_IS_OBJECT (self))
         {
-            g_warning ("n_object_get_id: arg is not NObject");
+            g_warning ("n_object_id: arg is not NObject");
             return -1;
         }
     return self->id;
 }
 gint64
-n_object_get_timestamp (NObject *self)
+n_object_timestamp (NObject *self)
 {
     if (!N_IS_OBJECT (self))
         {
-            g_warning ("n_object_get_timestamp: arg is not NObject");
+            g_warning ("n_object_timestamp: arg is not NObject");
             return -1;
         }
     return self->timestamp;
 }
 gint64
-n_object_get_timeout (NObject *self)
+n_object_timeout (NObject *self)
 {
     if (!N_IS_OBJECT (self))
         {
-            g_warning ("n_object_get_timeout: arg is not NObject");
+            g_warning ("n_object_timeout: arg is not NObject");
             return -1;
         }
     return self->timeout;
 }
 gint
-n_object_get_progress (NObject *self)
+n_object_progress (NObject *self)
 {
     if (!N_IS_OBJECT (self))
         {
-            g_warning ("n_object_get_progress: arg is not NObject");
+            g_warning ("n_object_progress: arg is not NObject");
             return -1;
         }
     return self->progress;
@@ -231,8 +231,8 @@ n_object_compare_by_timestamp (gconstpointer a, gconstpointer b)
             g_warning ("n_object_compare_by_timestamp: arg is not NObject");
             return -1;
         }
-    gint64 x = n_object_get_timestamp (notif_a);
-    gint64 y = n_object_get_timestamp (notif_b);
+    gint64 x = n_object_timestamp (notif_a);
+    gint64 y = n_object_timestamp (notif_b);
 
     if (x < y)
         return -1;

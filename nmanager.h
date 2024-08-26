@@ -37,8 +37,8 @@ gint n_manager_load_from_file (
     NManager *self, const gchar *filename,
     N_JSON_MANAGER_PARSER_TYPE j_parser_type, gboolean append
 );
-gint n_manager_get_notification_next (NManager *self, NObject *n_object);
-gint n_manager_get_notification_prev (NManager *self, NObject *n_object);
+gint n_manager_notification_next (NManager *self, NObject *n_object);
+gint n_manager_notification_prev (NManager *self, NObject *n_object);
 
 G_END_DECLS
 

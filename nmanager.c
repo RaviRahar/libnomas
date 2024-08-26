@@ -2,6 +2,8 @@
 #include "glib.h"
 #include "nobject.h"
 
+static enum object_access { NONE, NEXT, PREV };
+
 struct _NManager
 {
     GObject parent_instance;
@@ -15,12 +17,13 @@ struct _NManager
     gpointer callback_args;
 
     // TRUE = next; FALSE = prev
-    gboolean last_access_next_or_prev;
+    enum object_access last_access;
 };
 
 G_DEFINE_TYPE (NManager, n_manager, G_TYPE_OBJECT)
 
-void n_manager_listener_callback (NObject *n_object, gpointer n_manager);
+static void
+n_manager_listener_callback (NObject *n_object, gpointer n_manager);
 
 static void
 n_manager_init (NManager *self)
@@ -37,6 +40,7 @@ n_manager_init (NManager *self)
     n_listener_set_callback (
         self->n_listener, n_manager_listener_callback, (gpointer)self
     );
+    self->last_access = NONE;
 }
 
 static void
@@ -151,17 +155,10 @@ n_manager_n_list_append (NManager *self, NObject *n_object)
     return self->n_list;
 }
 
-void
+static void
 n_manager_listener_callback (NObject *n_object, gpointer n_manager)
 {
     /*NManager *self*/
-    if (!N_IS_MANAGER (n_manager))
-        {
-            g_warning ("n_manager_listener_callback: argument is not NManager"
-            );
-            return;
-        }
-
     NManager *self = N_MANAGER (n_manager);
 
     if (!n_manager_n_list_append (self, n_object))
@@ -172,7 +169,7 @@ n_manager_listener_callback (NObject *n_object, gpointer n_manager)
 
     if (!self->callback)
         {
-            g_warning (
+            g_info (
                 "n_manager_listener_callback: callback not set, nothing to do"
             );
             return;
@@ -281,33 +278,33 @@ n_manager_load_from_file (
 }
 
 gint
-n_manager_get_n_object_next (NManager *self, NObject *n_object)
+n_manager_n_object_next (NManager *self, NObject *n_object)
 {
     if (!N_IS_MANAGER (self))
         {
-            g_warning ("n_manager_get_n_object_next: argument is not NManager"
+            g_warning ("n_manager_n_object_next: argument is not NManager"
             );
             return -1;
         };
 
     if (!N_IS_OBJECT (n_object))
         {
-            g_warning ("n_manager_get_n_object_next: argument is not NObject");
+            g_warning ("n_manager_n_object_next: argument is not NObject");
             return -1;
         }
 
-    if (!self->last_access_next_or_prev)
+    if (self->last_access == PREV)
         {
             self->index++;
         }
 
     void *maybe_n_object = g_list_nth_data (self->n_list, self->index++);
-    self->last_access_next_or_prev = TRUE;
+    self->last_access = NEXT;
 
     if (!N_IS_OBJECT (maybe_n_object))
         {
             g_warning (
-                "n_manager_get_n_object_next: n_list data is not NObject"
+                "n_manager_n_object_next: n_list data is not NObject"
             );
             return -1;
         }
@@ -316,33 +313,33 @@ n_manager_get_n_object_next (NManager *self, NObject *n_object)
 }
 
 gint
-n_manager_get_n_object_prev (NManager *self, NObject *n_object)
+n_manager_n_object_prev (NManager *self, NObject *n_object)
 {
     if (!N_IS_MANAGER (self))
         {
-            g_warning ("n_manager_get_n_object_prev: argument is not NManager"
+            g_warning ("n_manager_n_object_prev: argument is not NManager"
             );
             return -1;
         }
 
     if (!N_IS_OBJECT (n_object))
         {
-            g_warning ("n_manager_get_n_object_prev: argument is not NObject");
+            g_warning ("n_manager_n_object_prev: argument is not NObject");
             return -1;
         }
 
-    if (!self->last_access_next_or_prev)
+    if (self->last_access == NEXT)
         {
             self->index--;
         }
 
     void *maybe_n_object = g_list_nth (self->n_list, self->index--);
-    self->last_access_next_or_prev = FALSE;
+    self->last_access = PREV;
 
     if (!N_IS_OBJECT (maybe_n_object))
         {
             g_warning (
-                "n_manager_get_n_object_next: n_list data is not NObject"
+                "n_manager_n_object_next: n_list data is not NObject"
             );
             return -1;
         }

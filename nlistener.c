@@ -10,7 +10,9 @@ struct _NListener
     GDBusConnection *connection;
     void (*callback) (NObject *, gpointer);
     gpointer callback_args;
-    guint subscription_id;
+    gboolean listener_running;
+    guint notif_filter;
+    guint drop_outgoing_filter;
 };
 
 G_DEFINE_TYPE (NListener, n_listener, G_TYPE_OBJECT)
@@ -21,7 +23,9 @@ n_listener_init (NListener *self)
     self->connection = NULL;
     self->callback = NULL;
     self->callback_args = NULL;
-    self->subscription_id = 0;
+    self->listener_running = FALSE;
+    self->notif_filter = 0;
+    self->drop_outgoing_filter = 0;
 }
 
 static void
@@ -30,6 +34,10 @@ n_listener_class_finalize (GObject *object)
     NListener *self = N_LISTENER (object);
     if (self->connection)
         {
+            if (self->listener_running)
+                {
+                    n_listener_stop (self);
+                }
             g_object_unref (self->connection);
         }
     G_OBJECT_CLASS (n_listener_parent_class)->finalize (object);
@@ -165,7 +173,7 @@ gint
 n_listener_dbus_filter_notif (NListener *self)
 {
     // Drop all outgoing messages, not allowed for a monitor object
-    g_dbus_connection_add_filter (
+    self->notif_filter = g_dbus_connection_add_filter (
         self->connection, n_listener_dbus_notif_filter, self, NULL
     );
     return 0;
@@ -262,6 +270,7 @@ n_listener_start (NListener *self)
                 "n_listener_start: could not add filter for notifcations"
             );
         }
+    self->listener_running = TRUE;
     return 0;
 }
 
@@ -275,15 +284,23 @@ n_listener_stop (NListener *self)
         }
     if (self->connection)
         {
-            if (self->subscription_id > 0)
+            if (self->notif_filter > 0)
                 {
-                    g_dbus_connection_signal_unsubscribe (
-                        self->connection, self->subscription_id
+                    g_dbus_connection_remove_filter (
+                        self->connection, self->notif_filter
                     );
-                    self->subscription_id = 0;
+                    self->notif_filter = 0;
+                }
+            if (self->drop_outgoing_filter > 0)
+                {
+                    g_dbus_connection_remove_filter (
+                        self->connection, self->drop_outgoing_filter
+                    );
+                    self->drop_outgoing_filter = 0;
                 }
             g_object_unref (self->connection);
             self->connection = NULL;
         }
+    self->listener_running = FALSE;
     return 0;
 }

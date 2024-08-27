@@ -2,7 +2,6 @@
 #define N_JSON_MANAGER_H
 
 #include <glib-object.h>
-#include <json-glib/json-glib.h>
 
 G_BEGIN_DECLS
 

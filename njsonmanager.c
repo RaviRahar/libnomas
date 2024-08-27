@@ -1,6 +1,10 @@
 #include "njsonmanager.h"
 #include "nobject.h"
 
+#include <glib-object.h>
+#include <glib.h>
+#include <json-glib/json-glib.h>
+
 struct _NJsonManager
 {
     GObject parent_instance;
@@ -240,7 +244,7 @@ n_json_manager_parser_array_from_file (
         }
     else
         {
-            g_warning ("n_json_manager_parser_get_array_from_file: failed to "
+            g_warning ("n_json_manager_parser_array_from_file: failed to "
                        "read existing content from file");
         }
 }
@@ -299,6 +303,7 @@ n_json_manager_load_from_file (NJsonManager *self, gboolean append)
     return 0;
 }
 
+// FIX: not working
 gint
 n_json_manager_save_to_file (NJsonManager *self, gboolean append)
 {

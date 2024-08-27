@@ -1,7 +1,8 @@
 #include "nlistener.h"
-#include "gio/gio.h"
-#include "glib.h"
 #include "nobject.h"
+
+#include <gio/gio.h>
+#include <glib.h>
 
 struct _NListener
 {

@@ -2,7 +2,7 @@
 #define NOTIFICATION_LISTENER_H
 
 #include "nobject.h"
-#include <gio/gio.h>
+
 #include <glib-object.h>
 
 G_BEGIN_DECLS

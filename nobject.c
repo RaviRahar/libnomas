@@ -1,5 +1,7 @@
 #include "nobject.h"
-#include <stdarg.h>
+
+#include <glib-object.h>
+#include <glib.h>
 
 struct _NObject
 {
@@ -38,7 +40,7 @@ n_object_init (NObject *self)
 static void
 n_object_class_finalize (GObject *object)
 {
-    NObject *self = N_OBJECT (object);
+    /*NObject *self = N_OBJECT (object);*/
     G_OBJECT_CLASS (n_object_parent_class)->finalize (object);
 }
 

@@ -1,8 +1,17 @@
 #include "nmanager.h"
-#include "glib.h"
+#include "njsonmanager.h"
+#include "nlistener.h"
 #include "nobject.h"
 
-static enum object_access { NONE, NEXT, PREV };
+#include <glib-object.h>
+#include <glib.h>
+
+enum object_access
+{
+    NONE,
+    NEXT,
+    PREV
+};
 
 struct _NManager
 {
@@ -272,8 +281,7 @@ n_manager_n_object_next (NManager *self, NObject *n_object)
 {
     if (!N_IS_MANAGER (self))
         {
-            g_warning ("n_manager_n_object_next: argument is not NManager"
-            );
+            g_warning ("n_manager_n_object_next: argument is not NManager");
             return -1;
         };
 
@@ -293,9 +301,7 @@ n_manager_n_object_next (NManager *self, NObject *n_object)
 
     if (!N_IS_OBJECT (maybe_n_object))
         {
-            g_warning (
-                "n_manager_n_object_next: n_list data is not NObject"
-            );
+            g_warning ("n_manager_n_object_next: n_list data is not NObject");
             return -1;
         }
     n_object = N_OBJECT (maybe_n_object);
@@ -307,8 +313,7 @@ n_manager_n_object_prev (NManager *self, NObject *n_object)
 {
     if (!N_IS_MANAGER (self))
         {
-            g_warning ("n_manager_n_object_prev: argument is not NManager"
-            );
+            g_warning ("n_manager_n_object_prev: argument is not NManager");
             return -1;
         }
 
@@ -328,9 +333,7 @@ n_manager_n_object_prev (NManager *self, NObject *n_object)
 
     if (!N_IS_OBJECT (maybe_n_object))
         {
-            g_warning (
-                "n_manager_n_object_next: n_list data is not NObject"
-            );
+            g_warning ("n_manager_n_object_next: n_list data is not NObject");
             return -1;
         }
     n_object = N_OBJECT (maybe_n_object);

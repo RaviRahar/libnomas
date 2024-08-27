@@ -1,11 +1,12 @@
 #ifndef NOTIFICATION_MANAGER_H
 #define NOTIFICATION_MANAGER_H
 
-#include "glib.h"
 #include "njsonmanager.h"
 #include "nlistener.h"
 #include "nobject.h"
+
 #include <glib-object.h>
+#include <glib.h>
 
 G_BEGIN_DECLS
 

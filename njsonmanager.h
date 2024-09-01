@@ -15,7 +15,7 @@ typedef enum
 } N_JSON_MANAGER_PARSER_TYPE;
 
 NJsonManager *n_json_manager_new (void);
-gint n_json_manager_set_n_list (NJsonManager *self, GList *n_list);
+gint n_json_manager_set_n_list (NJsonManager *self, GList **n_list);
 gint n_json_manager_set_file (
     NJsonManager *self, const gchar *file,
     N_JSON_MANAGER_PARSER_TYPE j_parser_type

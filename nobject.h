@@ -36,6 +36,7 @@ gint64 n_object_timeout (NObject *self);
 gint n_object_progress (NObject *self);
 
 gint n_object_compare_by_timestamp (gconstpointer a, gconstpointer b);
+gchar *n_object_print (NObject *self);
 
 G_END_DECLS
 

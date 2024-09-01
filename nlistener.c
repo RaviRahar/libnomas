@@ -111,11 +111,17 @@ n_listener_dbus_notif_filter (
                 = !g_strcmp0 (received_message_body_type, "(susssasa{sv}i)");
             if (received_known_notif_type)
                 {
-                    gchar *body = NULL, *message = NULL, *summary = NULL,
-                          *appname = NULL, *category = NULL,
-                          *default_action_name = NULL, *icon_path = NULL;
-                    gint id = 0, progress = 0;
-                    gint64 timestamp = 0, timeout = 0;
+                    gchar *body = g_strdup ("");
+                    gchar *summary = g_strdup ("");
+                    gchar *appname = g_strdup ("");
+                    gchar *icon_path = g_strdup ("");
+                    /*TODO: extraction of message and * default_action_name */
+                    gchar *message = g_strdup ("");
+                    gchar *category = g_strdup ("");
+                    gchar *default_action_name = g_strdup ("");
+                    guint id = 0;
+                    gint64 timestamp = -1;
+                    gint progress = -1, timeout = -1;
                     /* "(susssasa{sv}i)" */
 
                     // Help taken from dunst
@@ -125,11 +131,11 @@ n_listener_dbus_notif_filter (
                     GVariantIter i;
                     g_variant_iter_init (&i, received_message_body);
 
-                    g_variant_iter_next (&i, "s", appname);
-                    g_variant_iter_next (&i, "u", id);
-                    g_variant_iter_next (&i, "s", icon_path);
-                    g_variant_iter_next (&i, "s", summary);
-                    g_variant_iter_next (&i, "s", body);
+                    g_variant_iter_next (&i, "s", &appname);
+                    g_variant_iter_next (&i, "u", &id);
+                    g_variant_iter_next (&i, "s", &icon_path);
+                    g_variant_iter_next (&i, "s", &summary);
+                    g_variant_iter_next (&i, "s", &body);
                     g_variant_iter_next (&i, "^a&s", &actions);
                     g_variant_iter_next (&i, "@a{?*}", &hints);
                     g_variant_iter_next (&i, "i", &timeout);
@@ -139,6 +145,7 @@ n_listener_dbus_notif_filter (
                              hints, "category", G_VARIANT_TYPE_STRING
                          )))
                         {
+                            g_free (category);
                             category = g_variant_dup_string (dict_value, NULL);
                             g_variant_unref (dict_value);
                         }
@@ -148,8 +155,18 @@ n_listener_dbus_notif_filter (
                         category, default_action_name, icon_path, id,
                         timestamp, timeout, progress
                     );
+
+                    g_variant_unref (hints);
+                    g_strfreev (actions);
+                    g_free (body);
+                    g_free (message);
+                    g_free (summary);
+                    g_free (appname);
+                    g_free (category);
+                    g_free (default_action_name);
+                    g_free (icon_path);
+
                     self->callback (n_object, self->callback_args);
-                    g_object_unref (n_object);
                 }
         }
     return received_message;

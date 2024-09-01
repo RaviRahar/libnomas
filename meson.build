@@ -1,4 +1,4 @@
-project('tests', 'c', version: '0.0.1')
+project('tests', 'c', version: '0.0.1', default_options: ['buildtype=debug'])
 
 ###########################################
 ############ CONFIGURE PROJECT ############

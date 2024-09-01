@@ -13,9 +13,9 @@ struct _NObject
     gchar *category;
     gchar *default_action_name;
     gchar *icon_path;
-    gint id;
+    guint id;
     gint64 timestamp;
-    gint64 timeout;
+    gint timeout;
     gint progress;
 };
 
@@ -31,7 +31,7 @@ n_object_init (NObject *self)
     self->category = g_strdup ("");
     self->default_action_name = g_strdup ("");
     self->icon_path = g_strdup ("");
-    self->id = -1;
+    self->id = 0;
     self->timestamp = -1;
     self->timeout = -1;
     self->progress = -1;
@@ -40,7 +40,14 @@ n_object_init (NObject *self)
 static void
 n_object_class_finalize (GObject *object)
 {
-    /*NObject *self = N_OBJECT (object);*/
+    NObject *self = N_OBJECT (object);
+    g_free (self->body);
+    g_free (self->message);
+    g_free (self->summary);
+    g_free (self->appname);
+    g_free (self->category);
+    g_free (self->default_action_name);
+    g_free (self->icon_path);
     G_OBJECT_CLASS (n_object_parent_class)->finalize (object);
 }
 
@@ -64,25 +71,32 @@ n_object_new (const gchar *format, ...)
             switch (*format++)
                 {
                 case 'b':
+                    g_free (self->body);
                     self->body = g_strdup (va_arg (args, gchar *));
                     break;
                 case 'm':
+                    g_free (self->message);
                     self->message = g_strdup (va_arg (args, gchar *));
                     break;
                 case 's':
+                    g_free (self->summary);
                     self->summary = g_strdup (va_arg (args, gchar *));
                     break;
                 case 'a':
+                    g_free (self->appname);
                     self->appname = g_strdup (va_arg (args, gchar *));
                     break;
                 case 'c':
+                    g_free (self->category);
                     self->category = g_strdup (va_arg (args, gchar *));
                     break;
                 case 'd':
+                    g_free (self->default_action_name);
                     self->default_action_name
                         = g_strdup (va_arg (args, gchar *));
                     break;
                 case 'i':
+                    g_free (self->icon_path);
                     self->icon_path = g_strdup (va_arg (args, gchar *));
                     break;
                 case 'x':
@@ -241,4 +255,36 @@ n_object_compare_by_timestamp (gconstpointer a, gconstpointer b)
     if (x > y)
         return 1;
     return 0;
+}
+
+gchar *
+n_object_print (NObject *self)
+{
+    if (!N_IS_OBJECT (self))
+        {
+            g_warning ("n_object_print: arg is not NObject");
+            return NULL;
+        }
+    GString *n_object_string = g_string_new (NULL);
+    g_string_printf (
+        n_object_string,
+        "\nNotification:\n"
+        "\tappname: %s\n"
+        "\tsummary: %s\n"
+        "\tbody: %s\n"
+        "\tmessage: %s\n"
+        "\tcategory: %s\n"
+        "\tdefault_action_name: %s\n"
+        "\ticon_path: %s\n"
+        "\tid: %u\n"
+        "\ttimestamp: %ld\n"
+        "\ttimeout: %d\n"
+        "\tprogress: %d\n"
+        "\n",
+        self->appname, self->summary, self->body, self->message,
+        self->category, self->default_action_name, self->icon_path, self->id,
+        self->timestamp, self->timeout, self->progress
+    );
+    gchar *n_object_pretty = g_string_free_and_steal (n_object_string);
+    return n_object_pretty;
 }

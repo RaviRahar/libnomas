@@ -8,7 +8,7 @@
 struct _NJsonManager
 {
     GObject parent_instance;
-    GList *n_list;
+    GList **n_list;
     gchar *filename;
     N_JSON_MANAGER_PARSER_TYPE j_parser_type;
 };
@@ -29,7 +29,7 @@ n_json_manager_class_finalize (GObject *object)
     NJsonManager *self = N_JSON_MANAGER (object);
     if (self->n_list)
         {
-            g_list_free_full (g_steal_pointer (&self->n_list), g_object_unref);
+            g_list_free_full (g_steal_pointer (self->n_list), g_object_unref);
         }
     G_OBJECT_CLASS (n_json_manager_parent_class)->finalize (object);
 }
@@ -48,7 +48,7 @@ n_json_manager_new (void)
 };
 
 gint
-n_json_manager_set_n_list (NJsonManager *self, GList *n_list)
+n_json_manager_set_n_list (NJsonManager *self, GList **n_list)
 {
     if (!N_IS_JSON_MANAGER (self))
         {
@@ -78,7 +78,7 @@ n_json_manager_set_file (
             );
             return -1;
         }
-    self->filename = (gchar *)filename;
+    self->filename = g_strdup (filename);
     if (!self->filename)
         {
             g_warning ("n_json_manager_set_file: setting filename failed");
@@ -229,8 +229,10 @@ n_json_manager_parser_array_from_file (
 )
 {
     gchar *content = NULL;
+    g_warning ("n_json_manager_parser_array_from_file: entery");
     if (g_file_get_contents (filename, &content, NULL, NULL))
         {
+            g_warning ("n_json_manager_parser_array_from_file: inside if");
             JsonParser *parser = json_parser_new ();
             if (json_parser_load_from_data (parser, content, -1, NULL))
                 {
@@ -285,7 +287,7 @@ n_json_manager_load_from_file (NJsonManager *self, gboolean append)
 
     if (!append)
         {
-            g_list_free_full (self->n_list, g_object_unref);
+            g_list_free_full (*self->n_list, g_object_unref);
         }
 
     for (guint i = 0; i < json_array_get_length (array); i++)
@@ -295,8 +297,8 @@ n_json_manager_load_from_file (NJsonManager *self, gboolean append)
             n_json_manager_json_node_to_n_object (j_node, n_object);
             if (n_object)
                 {
-                    self->n_list = g_list_insert_sorted (
-                        self->n_list, n_object, n_object_compare_by_timestamp
+                    *self->n_list = g_list_insert_sorted (
+                        *self->n_list, n_object, n_object_compare_by_timestamp
                     );
                 }
         }
@@ -307,6 +309,7 @@ n_json_manager_load_from_file (NJsonManager *self, gboolean append)
 gint
 n_json_manager_save_to_file (NJsonManager *self, gboolean append)
 {
+    g_warning ("n_json_manager_save_to_file: in first if"); // FIX: REMOVE
     if (!N_IS_JSON_MANAGER (self))
         {
             g_warning (
@@ -316,12 +319,12 @@ n_json_manager_save_to_file (NJsonManager *self, gboolean append)
         }
     if (!self->filename)
         {
-            g_warning ("n_json_manager_load_from_file: filename not set");
+            g_warning ("n_json_manager_save_to_file: filename not set");
             return -1;
         }
     if (!self->n_list)
         {
-            g_warning ("n_json_manager_load_from_file: n_list not set");
+            g_warning ("n_json_manager_save_to_file: n_list not set");
             return -1;
         }
     JsonBuilder *builder = json_builder_new ();
@@ -330,12 +333,14 @@ n_json_manager_save_to_file (NJsonManager *self, gboolean append)
 
     if (append)
         {
+            g_warning ("n_json_manager_save_to_file: in first if"
+            ); // FIX: REMOVE
             n_json_manager_parser_array_from_file (
                 self->filename, array, self->j_parser_type
             );
         }
 
-    for (GList *l = self->n_list; l != NULL; l = l->next)
+    for (GList *l = *self->n_list; l != NULL; l = l->next)
         {
             NObject *n_object = (NObject *)l->data;
             JsonNode *j_node = NULL;

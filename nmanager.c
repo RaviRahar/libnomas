@@ -64,6 +64,10 @@ n_manager_class_finalize (GObject *object)
         {
             g_object_unref (self->n_listener);
         }
+    if (self->n_list)
+        {
+            g_list_free_full (g_steal_pointer (&self->n_list), g_object_unref);
+        }
     G_OBJECT_CLASS (n_manager_parent_class)->finalize (object);
 }
 
@@ -74,17 +78,79 @@ n_manager_class_init (NManagerClass *klass)
     object_class->finalize = n_manager_class_finalize;
 }
 
-static void
-n_manager_set_n_list (NManager *self, GList *n_list)
-{
-    self->n_list = n_list;
-    n_json_manager_set_n_list (self->n_jmanager, self->n_list);
-}
-
 NManager *
 n_manager_new (void)
 {
     return g_object_new (N_TYPE_MANAGER, NULL);
+}
+
+static void
+n_manager_set_n_list (NManager *self, GList *n_list)
+{
+    self->n_list = n_list;
+    n_json_manager_set_n_list (self->n_jmanager, &self->n_list);
+}
+
+static GList *
+n_manager_n_list_append (NManager *self, NObject *n_object)
+{
+    self->n_list = g_list_append (self->n_list, n_object);
+    if (!self->n_list)
+        {
+            n_manager_set_n_list (self, self->n_list);
+        }
+
+    g_warning ("%s", n_object_print (n_object)); // FIX: REMOVE
+
+    return self->n_list;
+}
+
+static void
+n_manager_listener_callback (NObject *n_object, gpointer n_manager)
+{
+    /*NManager *self*/
+    NManager *self = N_MANAGER (n_manager);
+
+    if (!n_manager_n_list_append (self, n_object))
+        {
+            g_warning ("n_manager_listener_callback: could not add new "
+                       "notification to n_list");
+        }
+
+    if (!self->callback)
+        {
+            g_info (
+                "n_manager_listener_callback: callback not set, nothing to do"
+            );
+            return;
+        }
+    self->callback (n_object, self->callback_args);
+}
+
+gint
+n_manager_set_callback (
+    NManager *self, void (*callback) (NObject *, gpointer),
+    gpointer callback_args
+)
+{
+
+    if (!N_IS_MANAGER (self))
+        {
+            g_warning ("n_manager_set_callback: argument is not NManager");
+            return -1;
+        }
+
+    self->callback = callback;
+
+    if (!self->callback)
+        {
+            g_warning ("n_manager_set_callback: setting callback failed");
+            return -1;
+        }
+
+    self->callback_args = callback_args;
+
+    return 0;
 }
 
 gint
@@ -114,66 +180,6 @@ n_manager_set_history_file (
     return n_json_manager_set_file (
         self->n_jmanager, self->history_file, j_parser_type
     );
-}
-
-gint
-n_manager_set_callback (
-    NManager *self, void (*callback) (NObject *, gpointer),
-    gpointer callback_args
-)
-{
-
-    if (!N_IS_MANAGER (self))
-        {
-            g_warning ("n_manager_set_callback: argument is not NManager");
-            return -1;
-        }
-
-    self->callback = callback;
-
-    if (!self->callback)
-        {
-            g_warning ("n_manager_set_callback: setting callback failed");
-            return -1;
-        }
-
-    self->callback_args = callback_args;
-
-    return 0;
-}
-
-static GList *
-n_manager_n_list_append (NManager *self, NObject *n_object)
-{
-    self->n_list = g_list_append (self->n_list, n_object);
-    if (!self->n_list)
-        {
-            n_manager_set_n_list (self, self->n_list);
-        }
-
-    return self->n_list;
-}
-
-static void
-n_manager_listener_callback (NObject *n_object, gpointer n_manager)
-{
-    /*NManager *self*/
-    NManager *self = N_MANAGER (n_manager);
-
-    if (!n_manager_n_list_append (self, n_object))
-        {
-            g_warning ("n_manager_listener_callback: could not add new "
-                       "notification to n_list");
-        }
-
-    if (!self->callback)
-        {
-            g_info (
-                "n_manager_listener_callback: callback not set, nothing to do"
-            );
-            return;
-        }
-    self->callback (n_object, self->callback_args);
 }
 
 gint

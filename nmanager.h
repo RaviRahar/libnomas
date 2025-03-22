@@ -41,6 +41,10 @@ gint n_manager_load_from_file (
 gint n_manager_notification_next (NManager *self, NObject *n_object);
 gint n_manager_notification_prev (NManager *self, NObject *n_object);
 
+// Returned string is still owned by NManager
+// It is freed when destructing NManager
+gchar *n_manager_print_n_list (NManager *self);
+
 G_END_DECLS
 
 #endif

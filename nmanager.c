@@ -118,11 +118,11 @@ n_manager_print_n_list (NManager *self)
 static GList *
 n_manager_n_list_append (NManager *self, NObject *n_object)
 {
-    self->n_list = g_list_append (self->n_list, n_object);
     if (!self->n_list)
         {
             n_manager_set_n_list (self, self->n_list);
         }
+    self->n_list = g_list_append (self->n_list, n_object);
 
     return self->n_list;
 }

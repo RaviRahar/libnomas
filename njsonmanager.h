@@ -15,6 +15,8 @@ typedef enum
 } N_JSON_MANAGER_PARSER_TYPE;
 
 NJsonManager *n_json_manager_new (void);
+// NJsonManager does not own n_list
+// Freeing n_list should be done by user
 gint n_json_manager_set_n_list (NJsonManager *self, GList **n_list);
 gint n_json_manager_set_file (
     NJsonManager *self, const gchar *file,

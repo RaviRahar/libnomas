@@ -19,7 +19,7 @@ static void
 n_json_manager_init (NJsonManager *self)
 {
     self->n_list = NULL;
-    self->filename = NULL;
+    self->filename = strdup ("");
     self->j_parser_type = GENERIC;
 }
 
@@ -27,9 +27,9 @@ static void
 n_json_manager_class_finalize (GObject *object)
 {
     NJsonManager *self = N_JSON_MANAGER (object);
-    if (self->n_list)
+    if (self->filename)
         {
-            g_list_free_full (g_steal_pointer (self->n_list), g_object_unref);
+            g_free (self->filename);
         }
     G_OBJECT_CLASS (n_json_manager_parent_class)->finalize (object);
 }
@@ -78,6 +78,7 @@ n_json_manager_set_file (
             );
             return -1;
         }
+    g_free (self->filename);
     self->filename = g_strdup (filename);
     if (!self->filename)
         {
@@ -159,6 +160,7 @@ n_json_manager_json_node_to_n_object (JsonNode *j_node, NObject *n_object)
     JsonObject *j_object = json_node_get_object (j_node);
 
     n_object = n_object_new (
+        "bmsacdixtop",
         json_object_get_string_member_or_default (j_object, "body", ""),
         json_object_get_string_member_or_default (j_object, "message", ""),
         json_object_get_string_member_or_default (j_object, "summary", ""),
@@ -168,7 +170,7 @@ n_json_manager_json_node_to_n_object (JsonNode *j_node, NObject *n_object)
             j_object, "default_action_name", ""
         ),
         json_object_get_string_member_or_default (j_object, "icon_path", ""),
-        json_object_get_int_member_or_default (j_object, "id", -1),
+        json_object_get_int_member_or_default (j_object, "id", 0),
         json_object_get_int_member_or_default (j_object, "timestamp", -1),
         json_object_get_int_member_or_default (j_object, "timeout", -1),
         json_object_get_int_member_or_default (j_object, "progress", -1)

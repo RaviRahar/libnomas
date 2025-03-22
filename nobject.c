@@ -17,6 +17,7 @@ struct _NObject
     gint64 timestamp;
     gint timeout;
     gint progress;
+    gchar *n_pretty;
 };
 
 G_DEFINE_TYPE (NObject, n_object, G_TYPE_OBJECT)
@@ -35,6 +36,7 @@ n_object_init (NObject *self)
     self->timestamp = -1;
     self->timeout = -1;
     self->progress = -1;
+    self->n_pretty = g_strdup ("");
 }
 
 static void
@@ -48,6 +50,7 @@ n_object_class_finalize (GObject *object)
     g_free (self->category);
     g_free (self->default_action_name);
     g_free (self->icon_path);
+    g_free (self->n_pretty);
     G_OBJECT_CLASS (n_object_parent_class)->finalize (object);
 }
 
@@ -265,9 +268,9 @@ n_object_print (NObject *self)
             g_warning ("n_object_print: arg is not NObject");
             return NULL;
         }
-    GString *n_object_string = g_string_new (NULL);
+    GString *n_pretty = g_string_new (NULL);
     g_string_printf (
-        n_object_string,
+        n_pretty,
         "\nNotification:\n"
         "\tappname: %s\n"
         "\tsummary: %s\n"
@@ -285,6 +288,7 @@ n_object_print (NObject *self)
         self->category, self->default_action_name, self->icon_path, self->id,
         self->timestamp, self->timeout, self->progress
     );
-    gchar *n_object_pretty = g_string_free_and_steal (n_object_string);
-    return n_object_pretty;
+    g_free (self->n_pretty);
+    self->n_pretty = g_string_free_and_steal (n_pretty);
+    return self->n_pretty;
 }

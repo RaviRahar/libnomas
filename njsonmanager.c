@@ -231,10 +231,8 @@ n_json_manager_parser_array_from_file (
 )
 {
     gchar *content = NULL;
-    g_warning ("n_json_manager_parser_array_from_file: entery");
     if (g_file_get_contents (filename, &content, NULL, NULL))
         {
-            g_warning ("n_json_manager_parser_array_from_file: inside if");
             JsonParser *parser = json_parser_new ();
             if (json_parser_load_from_data (parser, content, -1, NULL))
                 {
@@ -307,11 +305,9 @@ n_json_manager_load_from_file (NJsonManager *self, gboolean append)
     return 0;
 }
 
-// FIX: not working
 gint
 n_json_manager_save_to_file (NJsonManager *self, gboolean append)
 {
-    g_warning ("n_json_manager_save_to_file: in first if"); // FIX: REMOVE
     if (!N_IS_JSON_MANAGER (self))
         {
             g_warning (
@@ -335,8 +331,6 @@ n_json_manager_save_to_file (NJsonManager *self, gboolean append)
 
     if (append)
         {
-            g_warning ("n_json_manager_save_to_file: in first if"
-            ); // FIX: REMOVE
             n_json_manager_parser_array_from_file (
                 self->filename, array, self->j_parser_type
             );

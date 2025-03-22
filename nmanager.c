@@ -97,24 +97,6 @@ n_manager_set_n_list (NManager *self, GList *n_list)
     n_json_manager_set_n_list (self->n_jmanager, &self->n_list);
 }
 
-gchar *
-n_manager_print_n_list (NManager *self)
-{
-    GString *n_pretty_list = g_string_new (NULL);
-
-    for (GList *i = self->n_list; i; i = i->next)
-        {
-            NObject *notif = (NObject *)i->data;
-            g_string_append_printf (
-                n_pretty_list, "%s\n", n_object_print (notif)
-            );
-        }
-
-    g_free (self->n_pretty_list);
-    self->n_pretty_list = g_string_free_and_steal (n_pretty_list);
-    return self->n_pretty_list;
-}
-
 static GList *
 n_manager_n_list_append (NManager *self, NObject *n_object)
 {
@@ -366,4 +348,28 @@ n_manager_n_object_prev (NManager *self, NObject *n_object)
         }
     n_object = N_OBJECT (maybe_n_object);
     return 0;
+}
+
+gchar *
+n_manager_print_n_list (NManager *self)
+{
+    if (!N_IS_MANAGER (self))
+        {
+            g_warning ("n_manager_set_callback: argument is not NManager");
+            return NULL;
+        }
+
+    GString *n_pretty_list = g_string_new (NULL);
+
+    for (GList *i = self->n_list; i; i = i->next)
+        {
+            NObject *notif = (NObject *)i->data;
+            g_string_append_printf (
+                n_pretty_list, "%s\n", n_object_print (notif)
+            );
+        }
+
+    g_free (self->n_pretty_list);
+    self->n_pretty_list = g_string_free_and_steal (n_pretty_list);
+    return self->n_pretty_list;
 }
